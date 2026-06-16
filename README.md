@@ -53,4 +53,8 @@ corp.local
 - [ ] Windows11クライアント作成
 - [ ] ドメイン参加
 - [ ] ファイルサーバー構築
-- [ ] GPO設定    
+- [ ] GPO設定
+
+## Documents
+- [要件定義書](docs/requirements.md)
+- [基本設計書](docs/basic_design.md)
