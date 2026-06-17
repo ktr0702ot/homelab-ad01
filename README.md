@@ -50,11 +50,12 @@ corp.local
 - [x] OU作成
 - [x] ユーザー作成
 - [x] グループ作成
-- [ ] Windows11クライアント作成
-- [ ] ドメイン参加
-- [ ] ファイルサーバー構築
-- [ ] GPO設定
-
+- [x] Windows11クライアント作成
+- [x] ドメイン参加
+- [x] ファイルサーバー構築
+- [x] GPO設定
+- [x] DHCPサーバー構築
+      
 ## Documents
 - [要件定義書](docs/requirements.md)
 - [基本設計書](docs/basic_design.md)
