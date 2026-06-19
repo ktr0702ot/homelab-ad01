@@ -227,11 +227,58 @@ C:\Monitor\Logs\disk.log
 $server = @("AD01","FILE01","BK01","MON01")
 サーバー追加時は配列へ追記するだけで監視対象を増やせる
 
+## サービス監視
+
+### 目的
+ping監視ではサーバーの生存確認しかできないため、重要サービスの停止を検知できるようにする。
+
+### 監視対象
+| サーバー | サービス |
+|---|---|
+| AD01 | DNS |
+| AD01 | DHCPServer |
+| FILE01 | LanmanServer |
+
+### 情報取得
+PowerShellでリモートサービス状態を取得
+Get-Service -ComputerName AD01 -Name DNS
+
+### 判定処理
+サービス状態がRunning以外の場合は異常と判定
+if ($service.Status -eq "Running") { 
+  "OK" } 
+else { 
+  "ALERT" 
+}
+
+### ログ出力
+C:\Monitor\Logs\service.log
+出力例
+2026-06-19 20:00:00 OK AD01 DNS Running
+2026-06-19 20:00:00 ALERT FILE01 LanmanServer Stopped
+
+### 障害検知テスト
+FILE01のLanmanServerサービスを停止し、監視スクリプトで異常検知を確認
+Stop-Service LanmanServer
+結果：ALERT FILE01 LanmanServer Stopped
+
+### 復旧確認
+サービス展開後に正常判定へ戻ることを確認
+Start-Service LanmanServer
+結果：OK FILE01 LanmanServer Running
+
+### 学んだこと
+- Ping監視だけではサービス障害を検知できない
+- サービス監視により利用者影響のある障害を早期検知できる
+- 停止検知だけでなく復旧確認も重要
+
+
+
+
 
 
 ## 今後の課題
 
-* サービス監視
 * ディスク容量監視
 * イベントログ監視
 * メール通知
