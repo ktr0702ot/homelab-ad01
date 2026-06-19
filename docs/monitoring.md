@@ -187,6 +187,48 @@ FILE01 OK
 
 ---
 
+## ディスク容量監視
+
+### 目的
+Ping監視ではサーバーの生存確認しかできないため、ディスク容量不足による障害を事前に検知できるようにする。
+サーバーは稼働していても、ディスク容量が枯渇するとログ出力やアプリケーション動作に影響が発生するため、容量監視は重要な監視項目。
+
+### 監視対象
+- AD01
+- FILE01
+- BK01
+- MON01
+監視対象サーバーのCドライブ使用率を取得。
+
+### 情報取得方法
+MON01からPowerShellのCIMを利用し、各サーバーのディスク情報を取得した。
+取得コマンド：Get-CimInstance Win32_LogicalDisk -ComputerName FILE01 -Filter "DeviceID='C:'"
+取得項目：Size(総容量)、Freespace(空き容量)
+使用率計算：（総容量 - 空き容量） / 総容量 * 100
+  $usedPercent = (($disk.Size - $disl.FreeSpace) / $disk.Size) * 100
+  $usedPercent = [math]::Round($usedPercent,0)
+
+### 閾値判定
+使用率80％以上を異常と判定
+if ($usedPercent -ge 80) {
+  "ALERT"
+}
+else *
+  "OK"
+}
+
+### ログ出力
+監視結果をログファイルへ出力
+C:\Monitor\Logs\disk.log
+出力例：2026-06-19 11:30:00 OK FILE01 C: Used 25%
+
+### 複数サーバー対応
+配列とforeachを使用し複数サーバーをまとめて監視
+$server = @("AD01","FILE01","BK01","MON01")
+サーバー追加時は配列へ追記するだけで監視対象を増やせる
+
+
+
 ## 今後の課題
 
 * サービス監視
