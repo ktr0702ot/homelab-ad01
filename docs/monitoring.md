@@ -272,14 +272,49 @@ Start-Service LanmanServer
 - サービス監視により利用者影響のある障害を早期検知できる
 - 停止検知だけでなく復旧確認も重要
 
+---
 
+## イベントログ監視
+
+### 目的
+イベントログから警告・エラーを検知し、障害の兆候や発生履歴を確認できるようにする。
+
+### 監視対象
+- Systemログ
+- 警告  （Level3）
+- エラー（Level2）
+
+### 情報取得
+PowerShellでSystemログを取得する。
+Get-WinEvent -LogName System -MaxEvents 50
+取得項目
+- EventID
+- Level
+- ProviderName
+- TimeCreated
+
+### ログ出力
+ログ保存先
+C:\Monitor\Logs\eventlog.log
+正常時：2026-06-19 16:05:42 OK No warning or error events
+異常時：2026-06-19 16:10:00 ALERT EventID:7036 Level:2 Provider:Service Control Manager
+
+### 動作確認
+直近50件のイベントログから警告・エラーを抽出するスクリプトを作成した。
+警告・エラーが存在しない場合は正常メッセージを出力するようにした。
+
+### 学んだこと
+- サービス監視は「現在の状態」を確認する監視
+- イベントログ監視は「過去に発生した事象」を確認する監視
+- EventIDやProviderNameを利用することで障害内容を特定できる
+- 警告・エラーのみを監視対象とすることで不要な通知を減らせる
 
 
 
 
 ## 今後の課題
 
-* ディスク容量監視
+
 * イベントログ監視
 * メール通知
 * Zabbixなどの監視ツール導入
