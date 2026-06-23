@@ -309,13 +309,150 @@ C:\Monitor\Logs\eventlog.log
 - EventIDやProviderNameを利用することで障害内容を特定できる
 - 警告・エラーのみを監視対象とすることで不要な通知を減らせる
 
+# 監視サーバー構築・監視自動化
+
+## 目的
+MON01を監視サーバーとして構築し、PowerShellによる死活監視と日次レポート生成を自動化する
+
+## サーバー構成
+| サーバー | IPアドレス | 役割 |
+| ---- | ---- | ---- |
+| AD01 | 192.168.10.10 | Active Direcotry/DNS/DHCP |
+| FILE01 | 192.168.10.30 | ファイルサーバー |
+| CLIENT01 | 192.168.10.150 | クライアントPC |
+| BK01 | 192.168.10.40 | バックアップサーバー |
+| MON01 | 192.168.10.50 | 監視サーバー |
+
+## 監視対象
+PowerShellスクリプトで以下のサーバーを対象とした
+- AD01.corp.local
+- FILE01.corp.local
+- CLIENT01.corp.local
+- BK01.corp.local
+監視方法はICMP(Ping)による死活監視を採用した。
+
+## PowerShellスクリプト
+作成ファイル
+C:\Scripts\daily-server-report.ps1
+主な処理
+1.監視対象サーバー一覧を定義
+2.Tes-Connectionで疎通確認
+3.結果をログファイルへ出力
+4.NGサーバー数を集計
+5.日次レポートを生成
+
+## Test-Connectionについて
+使用コマンド
+Test-Connection -ComputerName $Server -Count 1 -Quiet
+### パラメータ
+- ComputerName
+  - 監視対象サーバー名
+- Count
+  - Ping送信回数
+  - 今回は一回
+- Quiet
+  - True/Falseのみ返却
+  - if文との相性がいい
+
+## ログ出力
+出力先：C:\Logs\daily-server-report.log
+出力例
+===== Daily Server Report =====
+Date : 2026-06-23 17:50:24 
+AD01.corp.local : OK
+FILE01.corp.local : OK
+CLIENT01.corp.local : OK 
+BK01.corp.local : OK 
+NG Count : 0
+
+## 障害試験
+
+### FILE01停止試験
+実施内容
+- FILE01をシャットダウン
+- スクリプト実行
+
+結果
+FILE01.corp.local : NG
+NG Count : 1
+
+正常に異常検知できることを確認。
+
+## 発生したトラブルと対応
+
+1.CLIENT01がNGになる
+症状
+CLIENT01 : NG
+調査
+- ping CLIENT01 失敗
+- nslookup CLIENT01 失敗
+- nslookup CLIENT01.corp.local 成功
+
+原因：BK01でDNSサフィックスが補完されておらず、短縮名で名前解決できなかった
+対応：監視対象をFQDNへ変更
+CLIENT01 → CLIENT01.corp.local
+
+2.BK01がNGになる
+症状
+BK01 : NG
+調査
+nslookup BK01.corp.local  失敗
+原因：BK01はドメイン悲参加の為、DNSへ自動登録されていなかった
+対応：AD01のDNSへ手動でAレコードを追加。
+BK01
+192.168.10.40
+追加後に正常化
+
+3.タスクスケジューラが実行されない
+症状
+ログが出力されない
+履歴
+ユーザーがログオンしていなかったため実行されませんでした
+原因：タスク設定が、ユーザーがログオンしているときのみ実行、になっていた
+対応：ユーザーがログオンしているかどうかにかかわらず実行、へ変更
+正常に自動実行されることを確認
+
+## タスクスケジューラ設定
+タスク名：Daily Server Report
+実行プログラム：powershell.exe
+引数：-ExecutionPolicy Bypass -File "C]\Scripts\daily-server-report.ps1"
+設定
+- 最上位の特権で実行
+- ログオン有無に関係なく実行
+
+## 学習内容
+- PowerShellによる死活監視
+- Test-Connectionの利用
+- ログ出力
+- FQDNとDNSの名前解決
+- DNSレコード管理
+- タスクスケジューラによる自動実行
+- 障害試験の実施
+- トラブルシュート手順
+- 監視レポート作成
+  
 
 
 
-## 今後の課題
 
 
-* イベントログ監視
-* メール通知
-* Zabbixなどの監視ツール導入
-* Azure Monitorの学習
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
