@@ -89,8 +89,60 @@ PowerShell
 - ログ出力
 - レポート集約
 
+# タスクスケジューラによる自動化
 
-- 
+## 目的
+監視スクリプトを手動実行するのではなく、定期的に自動実行することで監視運用を自動化する
+Windowsのタスクスケジューラを利用し、各監視スクリプトを日次実行する構成を作成した。
+
+## 登録タスク
+| タスク名 | 実行時刻 | 役割 |
+| ---- | ---- | ---- |
+| Daily Server Report | 17:40 | 死活監視 |
+| Service Monirot Report | 17:41 | サービス監視 |
+| Event Log Monitor | 17:42 | イベントログ監視 |
+| Daily Infra Report | 17:43 | 統合レポート作成 |
+
+## 実行順序
+監視結果を統合レポートへ反映するため、以下の順序で実行
+Daily Server Report
+↓ 
+Service Monitor Report 
+↓ 
+Event Log Monitor 
+↓ 
+Daily Infra Report
+
+## 設定内容
+プログラム：powershell.exe
+引数： -ExecutionPolicy Bypass -File "C:\Scripts\<script name>.ps1"
+実行オプション：ユーザーがログオンしているかどうかにかかわらず実行する
+
+## 動作確認
+統合レポート生成後に以下を確認した。
+C:\Logs\daily-infra-report.log
+出力例
+==== Daily Infrastructure Report ====
+[Server Status]
+NG Count : 0
+[Service Status]
+NG Count : 0
+[Event Log Status]
+Warning Count : 20
+Error Count : 4
+Event Count : 24
+
+結果：正常動作確認
+
+## 学習ポイント
+- タスクスケジューラによるPowerShell自動実行
+- 実行順序を考慮した監視設計
+- ログ出力の自動化
+- 統合レポート生成
+- 障害発生時の切り分け手順
+監視スクリプトの作成だけでなく、自動実行による運用まで実装できた
+
+
 
 
 
