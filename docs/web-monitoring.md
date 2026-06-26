@@ -1,4 +1,4 @@
-# Web Monitoring System（監視レポート公開システム）
+# Version 1.1 Web Monitoring System（監視レポート公開システム）
 
 ## 概要
 MON01で取得した監視結果をPowerShellでHTMLへ変換し、IIS01でWebページとして公開する監視レポートシステムを構築した。
@@ -167,7 +167,84 @@ Sync-WebData.ps1
 
 ---
 
+# Version 1.1 リファクタリング
 
+## publish-report.ps1のリファクタリング
+Version1.0では動作優先で実装したため、実務で保守しやすいコードを目標にリファクタリングを実施。
+
+### Configuration
+設定値をスクリプト先頭へ集約
+$SourceLog
+$PublishPath
+$OutputHtml
+$TemplatePath
+変更時に修正箇所を最小限にできる構成とした。
+
+### 関数化
+Get-ServiceList()
+↓
+Convert-ToHtmlRows()
+↓
+New-HtmlContent()
+↓
+Publish-Html()
+Main処理では「何をしているか」がわかる構成とした
+
+### Main処理
+リファクタリング後
+Get-Content
+↓
+Get-ServerList
+↓
+Convert-ToHtmlRows
+↓
+New-HtmlContent
+↓
+Publish-Html
+細かい実装を関数にし、Main処理をストーリとして読める構成へ改善
+
+### 命名規則
+可読性向上のため、変数名を見直し
+変更例
+Server   →  ServerLine
+Data    →  ServerInfo
+Rows    →  HtmlRows
+戻り値  →  Result
+変数名だけで役割がわかるように意識
+
+### HTMLテンプレート化
+HTMLをPowerShellから分離
+Templates
+  |-server-status-template.html
+テンプレート内の{{SERCER_ROWS}}をPowerShellで置換する構成へ変更
+HTML修正とPowerShell修正を独立して行えるようになった
+
+### CSS分離
+HTMLへ直接記述していたstyle属性を廃止
+PowerShell
+<span class="online">
+CSS
+.online{
+  color:green;
+}
+.offline{
+  color:red;
+}
+見た目をstyle.cssへ集約
+
+### エラーハンドリング
+Test-Pathを利用し、
+- ログファイル存在確認
+- テンプレート存在確認
+を追加
+ファイルが存在しない場合はエラーメッセージを表示して終了するよう改善した
+
+### ログ出力改善
+daily-server-report.ps1
+ログ出力をAdd-ContentからSet-Contentを利用した上書き方式へ変更。
+server-status.htmlには常に最新の監視結果のみ表示されるよう改善
+
+  
 
 
 
